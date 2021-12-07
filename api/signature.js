@@ -14,7 +14,7 @@ const validateSignature = async (address, signature) => {
     address = toLowerCase(address);
     let user = await User.findOne({ address });
     let nonce = user.nonce;
-    let msg = `Confirm wallet ownership on CleverKitties : ${nonce}`;
+    let msg = `confirm kitty ownership on clever kitties with nonce : ${nonce}`;
     let msgBufferHex = ethUtil.bufferToHex(Buffer.from(msg, "utf8"));
     let _address = toLowerCase(
       sigUtil.recoverPersonalSignature({
