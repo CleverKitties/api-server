@@ -1,6 +1,10 @@
 require("dotenv").config();
 const ethers = require("ethers");
 const router = require("express").Router();
+const mongoose = require("mongoose");
+const User = mongoose.model("User");
+const auth = require("./auth");
+const validateSignature = require("./signature");
 
 // game engine contract abi
 const GAME_ENGINE_ABI = require("./abi.json");
@@ -20,32 +24,84 @@ let gameEngineContract = new ethers.Contract(
   wallet
 );
 
-router.post("/submitAnswer", async (req, res) => {
-  let origin = req.get("origin");
-  console.log(origin);
-  // if (origin != "https://api.cleverkitties.io")
-  //   return res.json({
-  //     status: false,
-  //     data: "api call from invalid origin",
-  //   });
-  let kittyID = parseInt(req.body.kittyID);
-  let mode = parseInt(req.body.mode);
-  if (kittyID >= 10000 || mode > 3)
-    return res.json({
-      status: false,
-      data: "invalid kittyID or game mode",
-    });
-  // submit answer tx
-  let answer = await gameEngineContract.submitAnswer(kittyID, mode, {
-    gasLimit: 300000,
-  });
-  console.log(answer);
-  return res.json({
-    status: answer ? true : false,
-    data: `${
-      answer ? "answer submitted successfully" : "submit answer failed"
-    }`,
-  });
-});
+router.post(
+  "/submitAnswer",
+  /*auth,*/ async (req, res) => {
+    try {
+      let kittyID = parseInt(req.body.kittyID);
+      let mode = parseInt(req.body.mode);
+      let signature = req.body.signature;
+      let address = req.body.address;
+      let isCorrectAnswer = toLowerCase(req.body.isCorrectAnswer);
+      isCorrectAnswer = isCorrectAnswer == "true" ? true : false;
+      let isValidSignature = await validateSignature(address, signature);
 
+      if (!isValidSignature)
+        return res.json({
+          status: false,
+          data: "Invalid Wallet Singature",
+        });
+      if (kittyID >= 10000 || mode > 3)
+        return res.json({
+          status: false,
+          data: "Invalid kittyID or game mode",
+        });
+      // submit answer tx
+      let tx = await gameEngineContract.submitAnswer(
+        kittyID,
+        mode,
+        isCorrectAnswer,
+        {
+          gasLimit: 300000,
+        }
+      );
+      return res.json({
+        status: tx ? true : false,
+        data: `${
+          tx ? "Answer submitted successfully" : "submit answer failed"
+        }`,
+      });
+    } catch (error) {
+      return res.json({
+        status: false,
+        data: "Internal error",
+      });
+    }
+  }
+);
+
+router.get(
+  "/nonce/:address",
+  /*auth,*/ async (req, res) => {
+    try {
+      let address = toLowerCase(req.params.address);
+      let user = await User.findOne({
+        address,
+      });
+      if (user) {
+        let nonce = user.nonce;
+        return res.json({
+          status: true,
+          data: nonce,
+        });
+      } else {
+        user = new User();
+        user.address = address;
+        await user.save();
+        return res.json({
+          status: true,
+          data: 0,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      return res.json({});
+    }
+  }
+);
+
+const toLowerCase = (val) => {
+  if (!val) return val;
+  return val.toLowerCase();
+};
 module.exports = router;
