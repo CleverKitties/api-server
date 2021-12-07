@@ -23,11 +23,11 @@ let gameEngineContract = new ethers.Contract(
 router.post("/submitAnswer", async (req, res) => {
   let origin = req.get("origin");
   console.log(origin);
-  if (origin != "https://api.cleverkitties.io")
-    return res.json({
-      status: false,
-      data: "api call from invalid origin",
-    });
+  //   if (origin != "https://api.cleverkitties.io")
+  //     return res.json({
+  //       status: false,
+  //       data: "api call from invalid origin",
+  //     });
   let kittyID = parseInt(req.body.kittyID);
   let mode = parseInt(req.body.mode);
   if (kittyID >= 10000 || mode > 3)
