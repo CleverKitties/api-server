@@ -44,6 +44,7 @@ router.post(
       let isCorrectAnswer = req.body.isCorrectAnswer;
       //   isCorrectAnswer = isCorrectAnswer == "true" ? true : false;
       console.log(isCorrectAnswer);
+      console.log(typeof isCorrectAnswer);
       let isValidSignature = await validateSignature(address, signature);
 
       if (!isValidSignature)
