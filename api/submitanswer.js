@@ -7,7 +7,8 @@ const auth = require("./auth");
 const validateSignature = require("./signature");
 
 // game engine contract abi
-const GAME_ENGINE_ABI = require("./abi.json");
+const GAME_ENGINE_ABI = require("./kitty_engine_abi.json");
+const KITTY_NFT_ABI = require("./kitty_nft_abi.json");
 
 // fantom json rpc provider & signer wallet
 const provider = new ethers.providers.JsonRpcProvider(
@@ -24,6 +25,13 @@ let gameEngineContract = new ethers.Contract(
   wallet
 );
 
+// kitty nft contract
+let kittyNftContract = new ethers.Contract(
+  process.env.KITTY_CONTRACT,
+  KITTY_NFT_ABI,
+  wallet
+);
+
 router.post(
   "/submitAnswer",
   /*auth,*/ async (req, res) => {
@@ -31,7 +39,8 @@ router.post(
       let kittyID = parseInt(req.body.kittyID);
       let mode = parseInt(req.body.mode);
       let signature = req.body.signature;
-      let address = req.body.address;
+      //   get kitty nft owner here from id
+      let address = await kittyNftContract.ownerOf(kittyID);
       let isCorrectAnswer = toLowerCase(req.body.isCorrectAnswer);
       isCorrectAnswer = isCorrectAnswer == "true" ? true : false;
       let isValidSignature = await validateSignature(address, signature);
@@ -55,6 +64,7 @@ router.post(
           gasLimit: 300000,
         }
       );
+      await tx.wait();
       return res.json({
         status: tx ? true : false,
         data: `${
