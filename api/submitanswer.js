@@ -72,6 +72,7 @@ router.post(
         }`,
       });
     } catch (error) {
+      console.log(error);
       return res.json({
         status: false,
         data: "Internal error",
