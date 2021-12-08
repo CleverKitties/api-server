@@ -41,7 +41,7 @@ router.post(
       let signature = req.body.signature;
       //   get kitty nft owner here from id
       let address = await kittyNftContract.ownerOf(kittyID);
-      let isCorrectAnswer = toLowerCase(req.body.isCorrectAnswer);
+      let isCorrectAnswer = req.body.isCorrectAnswer;
       isCorrectAnswer = isCorrectAnswer == "true" ? true : false;
       let isValidSignature = await validateSignature(address, signature);
 
